@@ -1,5 +1,5 @@
 # Folder contents
-This folder contains the scripts necessary to extract normative deviation scores (Z-scores) from a longitudinal Spinocerebellar Ataxia type 1 (SCA1) clinical dataset using pre-existing normative models. It also contains a script for a clinical score (SARA scale) out-of-sample prediction using both Z-scores and non-normative brain measures. 
+This folder contains the scripts needed to extract normative deviation scores (Z-scores) from a longitudinal Spinocerebellar Ataxia type 1 (SCA1) clinical dataset using pre-existing normative models. It also contains a script for a clinical score (SARA scale) out-of-sample prediction using both Z-scores and non-normative brain measures. 
 
 This analysis was conducted both in a voxelwise fashion, using wholebrain jacobian determinants from a nonlinear image registration obtained with FSL, and in a parcellated fashion, using Freesurfer parcellated output (cortical thickness and subcortical volumes from the Destrieux atlas).
 
