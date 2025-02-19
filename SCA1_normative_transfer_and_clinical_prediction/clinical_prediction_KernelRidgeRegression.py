@@ -190,12 +190,12 @@ add_intercept_transformer = FunctionTransformer(add_intercept)
 clf = KernelRidge()
 
 
-if options["Xstandard"]  and options["bias"]:
+if options["Xstandard"]:
     pipeline = Pipeline(steps =[
     			('scaler', scaler),
                 ('intercept', add_intercept_transformer),
                 ('clf', clf)])
-elif not options["Xstandard"]  and options["bias"]:
+elif not options["Xstandard"] :
     pipeline = Pipeline(steps =[
                 ('intercept', add_intercept_transformer),
                 ('clf', clf)])
@@ -237,7 +237,7 @@ for train_idx, test_idx in splitter.split(X_sca):
 
     krr_model = best_pipeline.named_steps['clf']
 
-    if options["Xstandard"] or options["bias"]:
+    if options["Xstandard"]:
         X_train_final = best_pipeline[:-1].transform(X_train) #extract scaled and possibly selected features
         X_test_final = best_pipeline[:-1].transform(X_test)
         X_test_final_names = X_train.columns
