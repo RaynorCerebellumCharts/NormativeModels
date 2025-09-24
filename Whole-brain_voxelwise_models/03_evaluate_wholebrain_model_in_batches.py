@@ -269,7 +269,7 @@ vox_id = int(idxvol[vox_coord])
 
 # find batch id
 batch_num, mod_num = divmod(vox_id, batch_size)
-print (f'batch_{batch_num}_voxel_{mod_num}')
+print (f'batch_{batch_num}_voxel_{vox_id}')
 
 
 ### get the real test set for the plot
@@ -297,7 +297,7 @@ train, test = remaining.train_test_split(splits = split)
 test = test.merge(clin_subset) 
 
 model= NormativeModel.load(os.path.join(w_dir, f'batch_{batch_num}'))
-response_var = f'voxel_{mod_num}'
+response_var = f'voxel_{vox_id}'
 
 #select a single voxel to avoid plotting the whole batch
 def select_for_response_var(model: NormativeModel, data: NormData, response_var: str):
