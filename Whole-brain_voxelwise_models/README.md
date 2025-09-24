@@ -2,7 +2,7 @@
 
 This folder contains all necessary scripts to estimate, evaluate, and transfer or extend whole-brain voxelwise normative models. As voxelwise data can be quite heavy to hold in memory for large datasets, the pipeline proceeds in batches of voxels (size adjustable based on available computational resources).
 
-These scripts were used for normative models of log jacobian determinants (extracted directly with ANTs) and modulated gray and white matter (the ANTs registration transform was applied to the fsl_anat segmented files, and they were then multiplied by the jacobian determinants).
+These scripts were used for normative models of log jacobian determinants (extracted directly with ANTs) and modulated gray and white matter (the ANTs registration transforms were applied to the fsl_anat segmented files, and they were then multiplied by the jacobian determinants).
 
 ### Scripts include :
 * Preparing data : grabbing and cleaning demographic (chronological age, biological sex and site) data from several datasets, grabbing nifti data and extracting batches of voxel values, wrapping both into norm_data objects for every batch
