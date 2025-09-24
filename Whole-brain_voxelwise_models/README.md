@@ -6,6 +6,6 @@ These scripts were used for normative models of log jacobian determinants (extra
 
 ### Scripts include :
 * Preparing data : grabbing and cleaning demographic (chronological age, biological sex and site) data from several datasets, grabbing nifti data and extracting batches of voxel values, wrapping both into norm_data objects for every batch
-* Running models : setting model parameters, splitting the norm_data into train and test, optionally pushing clinical subjects into the test set, and using with the runner tool of the pcntoolkit to submit estimation jobs to a cluster
+* Running models : setting model parameters, splitting the norm_data into train and test, optionally pushing clinical subjects into the test set, and using the runner tool of the pcntoolkit to submit estimation jobs to a cluster
 * Evaluating models : grabbing fit statistics from each batch, calculating kurtosis and skew, saving each metric into nifti brain maps, plotting centiles plots with pcntooltkit utils, optionaly checking subjects with large amounts of outlier voxels
 * Transferring or extending models : preparing the new data (as described above), running the models either in a cluster with the runner or on a local machine with adjustable new batch size, getting subject-level Zscore brain maps
