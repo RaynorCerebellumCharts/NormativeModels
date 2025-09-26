@@ -287,7 +287,7 @@ for b in range(n_batches):
 #         shutil.rmtree(os.path.join(out_dir,batch,'subjects_chunks'))
      
 #%%##option 2 - if we have more than 100GB RAM, we can just load all niftis and keep them all as one python variable       
-resp_data = Parallel(n_jobs=-1,verbose =5)(delayed(load_file)(sub_path, mask,resample, smooth, vox_size)for sub_path in sub_paths)
+resp_data = Parallel(n_jobs=-1,verbose =5)(delayed(load_file)(sub_path, mask_nii,resample, smooth, vox_size)for sub_path in sub_paths)
 
     
 #Build norm_data objects and save them
