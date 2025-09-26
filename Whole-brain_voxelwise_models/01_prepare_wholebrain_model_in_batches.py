@@ -305,7 +305,7 @@ for b in range(n_batches):
     normdata_path = os.path.join(w_dir + batch, 'norm_data.pkl')
     norm_data = NormData.from_ndarrays(
         name=str(len(df_dem)) + "_subjects", #must not have spaces otherwise job submission with the runner will fail
-        X = np.array(df_dem.loc[:, covariates]).squeeze(), 
+        X = np.array(df_dem.loc[:, covariates]), 
         Y = np.vstack(data), 
         batch_effects=np.array(df_dem.loc[:, batch_effects]), 
         subject_ids = np.array(df_dem.index)
