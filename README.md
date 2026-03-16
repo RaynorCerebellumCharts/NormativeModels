@@ -15,7 +15,7 @@ This was done separately for batches of 150 voxels to keep reasonable variable s
   
 * Run model estimation
 
-Using the norm_data objects, a normative model is fitted for each voxel separately. Output metrics (z-scores, logp, evaluation statistics) are all stored within the model folders and can be accessed directly or loaded back in the norm_data objects. A general rule of thumb with the pcntoolkit is to leave about 10 times more storage space available in the model folders compared to the initial norm_data file size - voxelwise models are quite memory-intensive. 
+For each voxel, using a norm_data object and a specified train-test split, a normative model (warped BLR) is fitted on a training set and predictions are made on the test set. Output metrics (z-scores, logp, evaluation statistics) are all stored within the model folders and can be accessed directly or loaded back in the norm_data objects. A general rule of thumb with the pcntoolkit is to leave about 10 times more storage space available in the model folders compared to the initial norm_data file size - voxelwise models are quite memory-intensive. 
   
 * Evaluate fit of models
 
@@ -23,7 +23,7 @@ Voxelwise evaluation metrics such as kurtosis, skew and explained variance are e
 
 
 ## General workflow for model transfer
-A template transfer notebook is included in this repository for other users to freely download and apply the estimated voxelwise normative models to their own data. This will require a subset of that data to be used to adjust the models to new, unseen batch effects.
+A template transfer notebook is included in this repository for other users to freely download and apply the estimated voxelwise normative models to their own data. This requires a subset of that data to be used to adjust the models to new batch effects (e.g. new sites).
 
 Please also see this manuscript (https://www.biorxiv.org/content/10.64898/2026.02.17.706268v1.full) for a practical overview of normative modeling analysis pipelines, as implemented in the pcntoolkit v1.0 and above.
 
