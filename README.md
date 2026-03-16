@@ -1,5 +1,5 @@
 # NormativeModels
-This repository includes all code used for the estimation of voxelwise normative models of volumetry across the whole brain, and for the application of these estimated models to samples of interest (subject born preterm and patients with spinocerebellar ataxia). The corresponding manuscript is available at (preprint url).
+This repository includes all code used for the estimation of voxelwise normative models of volumetry across the whole brain, and for the application of these estimated models to samples of interest (subject born preterm and patients with spinocerebellar ataxia). The corresponding manuscript is available at (preprint url) and models are available at (https://surfdrive.surf.nl/s/Mb6mZyFmJeCaPcZ).
  
 All voxelwise models herein have been estimated using masks of the MNI152NLin2009cSym templates from templateflow resampled to 2mm resolution - the masks required to run the scripts are included in the /template_data folder. Three volume measures were used : log of jacobian determinants (log(JD)), modulated grey matter volume (GMV), and modulated white matter volume (WMV).
 
@@ -15,7 +15,7 @@ This was done separately for batches of 150 voxels to keep reasonable variable s
   
 * Run model estimation
 
-For each voxel, using a norm_data object and a specified train-test split, a normative model (warped BLR) is fitted on a training set and predictions are made on the test set. Output metrics (z-scores, logp, evaluation statistics) are all stored within the model folders and can be accessed directly or loaded back in the norm_data objects. A general rule of thumb with the pcntoolkit is to leave about 10 times more storage space available in the model folders compared to the initial norm_data file size - voxelwise models are quite memory-intensive. 
+For each voxel, using a norm_data object and a 50-50 train-test split, a normative model (warped BLR) is fitted on the training set and predictions are made on the test set. Output metrics (z-scores, logp, evaluation statistics) are all stored within the model folders and can be accessed directly or loaded back in the norm_data objects. A general rule of thumb with the pcntoolkit is to leave available about 10 times the amount of storage space used by the initial norm_data file size in the model folders - the outputs of estimated voxelwise models are quite memory-intensive. 
   
 * Evaluate fit of models
 
@@ -33,7 +33,7 @@ Done as explained above. To be fully compatible with estimated models, the same 
 
 * Transfer models (use transfer notebook)
 
-Models are downloaded from public repository, norm_data objects are built with the new dataset, transfer is run either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and subject-level Z-score brain maps are produced. Voxel batch size can be adjusted.
+Models are downloaded from public repository and extracted, norm_data objects are built with the new dataset, transfer is run either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and subject-level Z-score brain maps are produced. Voxel batch size can be adjusted.
 
 * Examine normative deviations in samples of interest
 
