@@ -23,15 +23,17 @@ Voxelwise evaluation metrics such as kurtosis, skew and explained variance are e
 
 
 ## General workflow for model transfer
-A template transfer notebook is included in this repository for other users to freely download and apply the estimated voxelwise normative models to their own data. Please also see this manuscript (https://www.biorxiv.org/content/10.64898/2026.02.17.706268v1.full) for a practical overview of normative modeling analysis pipelines, as implemented in the pcntoolkit v1.0 and above.
+A template transfer notebook is included in this repository for other users to freely download and apply the estimated voxelwise normative models to their own data. This will require a subset of that data to be used to adjust the models to new, unseen batch effects.
+
+Please also see this manuscript (https://www.biorxiv.org/content/10.64898/2026.02.17.706268v1.full) for a practical overview of normative modeling analysis pipelines, as implemented in the pcntoolkit v1.0 and above.
 
 * Preprocess MRI data (use 01 script)
 
-Done as explained above. To be fully compatible with estimated models, the same preprocessing pipeline should be used.
+Done as explained above. To be fully compatible with estimated models, the same preprocessing pipeline should be used on the new dataset.
 
 * Transfer models (use transfer notebook)
 
-Models are downloaded from public repository, norm_data objects are built with the new dataset, transfer is run either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and subject-level Z-score brain maps are produced. Voxel batch sizecan be adjusted.
+Models are downloaded from public repository, norm_data objects are built with the new dataset, transfer is run either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and subject-level Z-score brain maps are produced. Voxel batch size can be adjusted.
 
 * Examine normative deviations in samples of interest
 
