@@ -19,7 +19,7 @@ For each voxel, using a norm_data object and a 50-50 train-test split, a normati
   
 * Evaluate fit of models
 
-Voxelwise evaluation metrics such as kurtosis, skew and explained variance are extracted and plotted onto brain images to examine how well the estimated models fit the data.
+Voxelwise evaluation metrics such as kurtosis, skewness and explained variance are extracted and plotted onto brain images to examine how well the estimated models fit the data.
 
 
 ## General workflow for model transfer
