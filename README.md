@@ -1,4 +1,4 @@
-# NormativeModels
+# Voxelwise Normative Models
 This repository includes all code used for the estimation of voxelwise normative models of volumetry across the whole brain, and for the application of these estimated models to samples of interest (subject born preterm and patients with spinocerebellar ataxia). The corresponding manuscript is available at (preprint url) and models are available at (https://surfdrive.surf.nl/s/Mb6mZyFmJeCaPcZ).
  
 All voxelwise models herein have been estimated using masks of the MNI152NLin2009cSym templates from templateflow resampled to 2mm resolution - the masks required to run the scripts are included in the /template_data folder. Three volume measures were used : log of jacobian determinants (log(JD)), modulated grey matter volume (GMV), and modulated white matter volume (WMV).
