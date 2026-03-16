@@ -6,7 +6,7 @@ All voxelwise models herein have been estimated using masks of the MNI152NLin200
 ## General workflow for model estimation
 * Preprocess MRI data:
 
-Done with the ANTs (Advanced Normalization Tools) toolbox and, additionally for GMV and WMV, with fsl. Inputs are raw T1 scans, outputs are preprocessed T1_BrainNorm_Jacobian.nii, T1_BrainNorm_GMV.nii, and T1_Brain_Norm_WMV.nii files.
+This is done with the ANTs (Advanced Normalization Tools) toolbox and, additionally for GMV and WMV, with fsl. Inputs are raw T1 scans, outputs are preprocessed T1_BrainNorm_Jacobian.nii, T1_BrainNorm_GMV.nii, and T1_Brain_Norm_WMV.nii files.
   
 * Prepare normative model estimation:
 
@@ -15,7 +15,7 @@ This was done separately for batches of 150 voxels to keep reasonable variable s
   
 * Run model estimation:
 
-Using the norm_data objects, a normative model is fitted for each voxel separately. Output metrics (z-scores, logp, evaluation statistics) are all stored within the model folders and can be accessed directly or loaded back in the norm_data objects.
+Using the norm_data objects, a normative model is fitted for each voxel separately. Output metrics (z-scores, logp, evaluation statistics) are all stored within the model folders and can be accessed directly or loaded back in the norm_data objects. A general rule of thumb with the pcntoolkit is to leave about 10 times more storage space available in the model folders compared to the initial norm_data file size - voxelwise models specifically are memory-intensive. 
   
 * Evaluate fit of models:
 
@@ -32,3 +32,8 @@ Done as explained above. To be fully compatible with estimated models, the same 
 * Transfer models: (use transfer notebook)
 
 Download models from public repository, build norm_data objects, run the transfer either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and outputs subject-level Z-score brain maps. Can adjust voxel batch size.
+
+* Examine normative deviations in samples of interest:
+
+This can be done using a variety of group-level  or individual-level analyses. Some examples can be found in the 05 script (group-dependent local and whole-brain burden of extreme deviations, TFCE test of mean group differences, etc.) and 06 script (patient-specific voxelwise deviation map, cross-validated regression analyses of symptom score), but this is of course entirely dependent on the research question.
+
