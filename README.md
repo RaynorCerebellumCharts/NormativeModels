@@ -31,7 +31,7 @@ Done as explained above. To be fully compatible with estimated models, the same 
 
 * Transfer models (use transfer notebook)
 
-Download models from public repository, build norm_data objects, run the transfer either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and outputs subject-level Z-score brain maps. Can adjust voxel batch size.
+Models are downloaded from public repository, norm_data objects are built with the new dataset, transfer is run either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and subject-level Z-score brain maps are produced. Voxel batch sizecan be adjusted.
 
 * Examine normative deviations in samples of interest
 
