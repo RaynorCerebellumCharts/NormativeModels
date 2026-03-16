@@ -1,10 +1,34 @@
 # NormativeModels
-This repository includes all scripts used for the estimation of voxelwise normative models of volumetry across the whole brain, as well as those used to apply these estimated models to samples of interest (subject born preterm and patients with spinocerebellar ataxia). The corresponding publication is available at (preprint url).
+This repository includes all code used for the estimation of voxelwise normative models of volumetry across the whole brain, and to apply these estimated models to samples of interest (subject born preterm and patients with spinocerebellar ataxia). The corresponding manuscript is available at (preprint url).
  
-Importantly, a template transfer notebook is also included for other users to freely download and apply the estimated voxelwise normative models to their own data. Please also see this paper (pu25 url) for a general and practical overview of normative modeling analysis pipelines, as implemented in the pcntoolkit v1.0 and above.
+All voxelwise models herein have been estimated using masks of the MNI152NLin2009cSym templates from templateflow resampled to 2mm resolution - the required masks are included in the /template_data folder. Three volume measures were used : log of jacobian determinants (log(JD)), modulated grey matter volume (GMV), and modulated white matter volume (WMV).
 
-All voxelwise models herein have been estimated using masks of the MNI152NLin2009cSym templates from templateflow - the required masks are included here in the /template_data folder. 
+## General workflow for model estimation
+* Preprocess MRI data:
+
+Done with the ANTs (Advanced Normalization Tools) toolbox and, additionally for GMV and WMV, with fsl. Inputs are raw T1 scans, outputs are preprocessed T1_BrainNorm_Jacobian.nii, T1_BrainNorm_GMV.nii, and T1_Brain_Norm_WMV.nii files.
+  
+* Prepare normative model estimation:
+
+Extract voxel values from the preprocessed MRI data files and, together with demographic data of the sample (age as covariate, sex and site as batch effects), build norm_data objects required by the pcntoolkit for normative modeling operations.
+This was done separately for batches of 150 voxels to keep reasonable variable size and estimation runtime.
+  
+* Run model estimation:
+
+Using the norm_data objects, a normative model is fitted for each voxel separately. Output metrics (z-scores, logp, evaluation statistics) are all stored within the model folders and can be accessed directly or loaded back in the norm_data objects.
+  
+* Evaluate fit of models:
+
+Voxelwise evaluation metrics such as kurtosis, skew and explained variance are extracted and plotted onto brain images to examine how well the models fit the data.
 
 
-This folder
-* Transferring or extending models : preparing the new data (as described above), running the models either in a cluster with the runner or on a local machine with adjustable new batch size, getting subject-level Zscore brain maps
+## General workflow for model transfer
+A template transfer notebook is included in this repository for other users to freely download and apply the estimated voxelwise normative models to their own data. Please also see this paper (pu25 url) for a practical overview of normative modeling analysis pipelines, as implemented in the pcntoolkit v1.0 and above.
+
+* Preprocess MRI data: (use 01 script)
+
+Done as explained above. To be fully compatible with estimated models, the same preprocessing pipeline should be used.
+
+* Transfer models: (use transfer notebook)
+
+Download models from public repository, build norm_data objects, run the transfer either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and outputs subject-level Z-score brain maps. Can adjust voxel batch size.
