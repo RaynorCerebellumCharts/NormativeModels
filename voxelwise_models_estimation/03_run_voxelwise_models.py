@@ -5,7 +5,7 @@ Created on Tue Jun 24 16:00:33 2025
 
 @author: Alice Chavanne
 This scripts loads the norm_data objects and runs the normative model estimation for each batch of response variables (voxel values). 
-This can be done on a computing cluster like slur or torque, but can also be run with local parallelization. 
+This can be done on a computing cluster like slurm or torque, but can also be run with local parallelization. 
 One normative model is estimated per voxel.
 """
 
