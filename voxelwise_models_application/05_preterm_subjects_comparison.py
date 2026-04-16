@@ -79,13 +79,13 @@ if modality == 'log_jacs':
 
 elif modality == 'mod_gmv_and_wmv':
     name = '53593_subjects'
-    mask_nii_gm = os.path.join(root_dir,'tpl-MNI152NLin2009cSym/tpl-MNI152NLin2009cSym_res-2_label-GM_mask_probseg.nii.gz')
+    mask_nii_gm = os.path.join(root_dir,'tpl-MNI152NLin2009cSym/tpl-MNI152NLin2009cSym_res-2_label-GM_mask_probseg0.5.nii.gz')
     mask_gm = dataio.fileio.load(mask_nii_gm, mask=mask_nii_gm, vol=False).T #load all nonzero voxels of the mask
     n_voxels_gm = len(mask_gm)
     n_batches_gm = n_voxels_gm // vox_batch_size + int(n_voxels_gm % vox_batch_size != 0)
     voxel_indices_gm = list(range(n_voxels_gm))
     
-    mask_nii_wm = os.path.join(root_dir,'tpl-MNI152NLin2009cSym/tpl-MNI152NLin2009cSym_res-2_label-WM_mask_probseg.nii.gz')
+    mask_nii_wm = os.path.join(root_dir,'tpl-MNI152NLin2009cSym/tpl-MNI152NLin2009cSym_res-2_label-WM_mask_probseg0.5.nii.gz')
     mask_wm = dataio.fileio.load(mask_nii_wm, mask=mask_nii_wm, vol=False).T #load all nonzero voxels of the mask
     n_voxels_wm = len(mask_wm)
     n_batches_wm = n_voxels_wm // vox_batch_size + int(n_voxels_wm % vox_batch_size != 0)
