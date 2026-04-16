@@ -44,9 +44,9 @@ ukb_dir = '/path/to/ukb/data/'
 if modality == 'log_jacs':
     mask_nii = os.path.join(tpl_dir,'tpl-MNI152NLin2009cSym_res-2_T1w_mask_BrainExtractionBrain.nii.gz')
 if modality == 'mod_gmv':
-    mask_nii = os.path.join(tpl_dir,'tpl-MNI152NLin2009cSym_res-2_label-GM_mask_probseg.nii.gz')
+    mask_nii = os.path.join(tpl_dir,'tpl-MNI152NLin2009cSym_res-2_label-GM_mask_probseg0.5.nii.gz')
 if modality == 'mod_wmv':
-    mask_nii = os.path.join(tpl_dir,'tpl-MNI152NLin2009cSym_res-2_label-WM_mask_probseg.nii.gz')
+    mask_nii = os.path.join(tpl_dir,'tpl-MNI152NLin2009cSym_res-2_label-WM_mask_probseg0.5.nii.gz')
 
 cohorts = ['ABCD',
            'CMI-HBN',
