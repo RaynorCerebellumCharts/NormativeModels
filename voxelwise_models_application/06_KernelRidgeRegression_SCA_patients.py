@@ -100,8 +100,8 @@ if (featureset["BL_wholebrain_log_jacs_raw"] or featureset["BL_wholebrain_log_ja
     proc_dir = os.path.join(model_dir,'models','BLR_aff_nonlin_log_jacs_wholebrain_2mm_14')
     
 if (featureset["BL_wholebrain_mod_gmv_and_wmv_raw"] or featureset["BL_wholebrain_mod_gmv_and_wmv_Z"]): # combine the two masks
-    mask_nii_gm = os.path.join(model_dir,'tpl-MNI152NLin2009cSym/tpl-MNI152NLin2009cSym_res-2_label-GM_mask_probseg.nii.gz')
-    mask_nii_wm = os.path.join(model_dir,'tpl-MNI152NLin2009cSym/tpl-MNI152NLin2009cSym_res-2_label-WM_mask_probseg.nii.gz')
+    mask_nii_gm = os.path.join(model_dir,'tpl-MNI152NLin2009cSym/tpl-MNI152NLin2009cSym_res-2_label-GM_mask_probseg0.5.nii.gz')
+    mask_nii_wm = os.path.join(model_dir,'tpl-MNI152NLin2009cSym/tpl-MNI152NLin2009cSym_res-2_label-WM_mask_probseg0.5.nii.gz')
     mask_nii_combined = os.path.join(model_dir,'tpl-MNI152NLin2009cSym/tpl-MNI152NLin2009cSym_res-2_combined_label-GM_WM_mask.nii.gz')
     proc_dir_gm= os.path.join(model_dir,'models','BLR_aff_nonlin_mod_gmv_labelmask_2mm_smoothed_fwhm6_07') 
     proc_dir_wm= os.path.join(model_dir,'models','BLR_aff_nonlin_mod_wmv_labelmask_2mm_smoothed_fwhm6_07') 
