@@ -299,7 +299,8 @@ for ii in range(len(dfs)):
 
 # now join 
 df_dem = pd.concat(dfs)
-df_dem.loc[:,'sex'] = df_dem.loc[:,'sex'].astype(int)#sex must be same datatype everywhere otherwise that'll double the batch effect
+#make sure that sex is the same datatype everywhere otherwise that'll double the batch effect
+df_dem['sex'] = df_dem['sex'].astype(int).map({0: 'F', 1: 'M'})
 print(df_dem.shape)
 
 #%%#grab nifti file paths for all subjects
