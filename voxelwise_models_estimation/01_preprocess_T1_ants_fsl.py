@@ -77,7 +77,7 @@ for s in sub_dirs[:]:
                   ]
     # Compose transform - combine affine and nonlinear transform 
     ants_cp_cmd = ['ComposeMultiTransform 3 ',
-                   os.path.join(ants_dir,'T1_BrainNorm_NewAffWarp.nii.gz'),
+                   os.path.join(ants_dir,'T1_BrainNorm_AffWarp.nii.gz'),
                    '-R', tpl_file,
                    '-i', os.path.join(ants_dir, 'T1_BrainNorm_1Warp.nii.gz'),
                    '-i', os.path.join(ants_dir, 'T1_BrainNorm_0GenericAffine.mat'),
