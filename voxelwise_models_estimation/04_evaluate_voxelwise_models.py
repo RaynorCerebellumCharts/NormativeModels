@@ -430,12 +430,27 @@ for b in range(n_batches):
     if len(os.listdir(os.path.join(dest_dir,batch,'model')))!=vox_batch_size+1 :
         print(f'less than {vox_batch_size } models in {batch}!')
         
-#zip the folder
 source_dir = os.path.join(root_dir, 'models', prefix + modality + suffix + '_models_only')
+
+#tar the folder - no compression example
 output_tar = source_dir+'.tar'
 
 with tarfile.open(output_tar, "w") as tar:
     tar.add(source_dir, arcname=os.path.basename(source_dir))
 
 print(f"Created archive: {output_tar}")
+
+#zip the folder - compressed example
+output_zip = source_dir+'.zip'
+with zipfile.ZipFile(output_zip, "w", compression=zipfile.ZIP_DEFLATED) as zipf:
+    for root, dirs, files in os.walk(source_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+
+            # keep same relative structure inside the zip
+            arcname = os.path.relpath(filepath, start=source_dir)
+
+            zipf.write(filepath, arcname)
+
+    print(f"Created archive: {output_zip}")
 
