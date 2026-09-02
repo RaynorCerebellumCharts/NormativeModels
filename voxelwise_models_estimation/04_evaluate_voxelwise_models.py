@@ -178,6 +178,75 @@ plt.gca().set_facecolor("white")
 plt.grid(True, color="lightgray", linestyle="-", linewidth=0.7)
 plt.show()
 
+#%% Optional - evaluating stability of z-scores using a subset of test data and additional data from same-subject extra scanning session (i.e. approximate test-retest situation)
+#here it is assumed that the additional predict() or transfer_predict() that was required on this retest data has already been run and the Z-score csv is in w_dir_retest
+w_dir_retest = os.path.join(proc_dir,'retest/')
+name_retest = '1622_subjects' # must match the name given to the retest normdata objects when they were built
+
+##load sublist
+retest_subs = pd.read_csv(os.path.join(w_dir_retest, "retest_subjects.csv"), header = None, dtype = str)[0].to_list()
+
+if not os.path.exists(w_dir_retest + '/retest_metrics/'):
+    os.makedirs(w_dir_retest + '/retest_metrics/')
+
+Z_all = []
+Z_retest_all = []
+
+for b in range(n_batches):
+    batch = f'batch_{b}'
+    print(batch)
+
+    #extract zscores from first scan
+    Z_path = os.path.join(w_dir, batch, 'results', 'Z_'+ name +'_test.csv')
+    Z = pd.read_csv(Z_path)
+    Z = Z.drop(columns='observations')
+    sorted_cols = sorted(Z.columns, key=extract_num)
+    Z = Z[sorted_cols]
+    Z["subject_ids"] =Z["subject_ids"].astype(str)
+    Z.set_index('subject_ids',inplace=True) #need this for 1.1.2 back-compatible
+    Z = Z.loc[Z.index.intersection(retest_subs)]
+    
+    #extract zscores from same-subjects second scan
+    Z_path = os.path.join(w_dir_retest, batch, 'results', 'Z_'+ name_retest + '.csv')
+    Z_retest = pd.read_csv(Z_path)
+    Z_retest = Z_retest.drop(columns='observations')
+    sorted_cols = sorted(Z_retest.columns, key=extract_num)
+    Z_retest = Z_retest[sorted_cols]
+    Z_retest.set_index('subject_ids',inplace=True)
+    Z_retest = Z_retest.loc[Z_retest.index.intersection(Z.index + '_scan2')] #match subids between scan1 and scan2
+    
+    Z_all.append(Z)
+    Z_retest_all.append(Z_retest)
+
+Z_all = pd.concat(Z_all, axis = 1)
+Z_all.sort_index(inplace=True) #important - match indices with the retest ordering.
+Z_retest_all = pd.concat(Z_retest_all, axis = 1)
+
+#arrays
+X = Z_all.values.astype(float)  # subjects x voxels
+Y = Z_retest_all.values.astype(float)
+n = X.shape[0] #subjects
+k = 2 # sessions
+
+data = np.stack([X,Y], axis=1)# subjects x sessions x voxels
+
+#manual calculation of icc because of vox number we can't use pingouin
+mean_sub = data.mean(axis=1) # subjects x voxels
+mean_ses = data.mean(axis=0) # sessions x voxels
+grand_mean = data.mean(axis=(0, 1)) # voxels
+ms_sub = k * np.sum((mean_sub - grand_mean)**2, axis=0) / (n - 1) #between subjects variance
+ms_err = (np.sum((data - mean_sub[:, None, :] - mean_ses[None, :, :] + grand_mean)**2,axis=(0, 1)) / ((n - 1) * (k - 1))) #error variance
+
+icc3 = (ms_sub -ms_err) / (ms_sub + (k - 1) * ms_err)
+icc3 = np.clip(icc3, -1, 1) #tiny overboard values
+ptksave(icc3, os.path.join(w_dir_retest,'retest_metrics','icc3.nii.gz'), example=ex_nii, mask=mask_nii)
+
+
+with open(os.path.join(w_dir_retest, 'retest_metrics', 'Z.pkl'), 'wb') as f:
+    pickle.dump(np.array(Z_all), f)
+with open(os.path.join(w_dir_retest, 'retest_metrics', 'Z_retest.pkl'), 'wb') as f:
+    pickle.dump(np.array(Z_retest_all), f)
+
 
 #%%% Optional -  set up data preparation for centile plots of specific voxels harmonized on batch effects 
 #To plot this we need a fitted normative model object and the corresponding (test) normdata object
