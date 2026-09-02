@@ -35,7 +35,7 @@ Done as explained above. To be fully compatible with estimated models, the same 
 
 Models are downloaded from public repository and extracted, norm_data objects are built with the new dataset, transfer is run either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and subject-level Z-score brain maps are produced. Voxel batch size can be adjusted.
 
-Of note : During model estimation, voxels were indexed based on vectorisation of the corresponding binarized brain mask (i.e. with numpy 3D flattening order). If users are interested in a subset of voxels, a mapping between their mask of interest resampled to MNI152NLin2009cSym template space, and the masks used for model estimation can be made to select appropriate voxel indices/models. 
+Of note : During model estimation, voxels were indexed through vectorisation of the corresponding binarized brain mask (i.e. with numpy 3D flattening order). If users are interested in a subset of voxels, a mapping between their mask of interest resampled to MNI152NLin2009cSym template space, and the masks used for model estimation can be made to select appropriate voxel indices/models. 
 
 * Examine normative deviations in samples of interest
 
