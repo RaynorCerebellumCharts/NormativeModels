@@ -179,7 +179,7 @@ plt.grid(True, color="lightgray", linestyle="-", linewidth=0.7)
 plt.show()
 
 #%% Optional - evaluating stability of z-scores using a subset of test data and additional data from same-subject extra scanning session (i.e. approximate test-retest situation)
-#here it is assumed that the additional predict() or transfer_predict() that was required on this retest data has already been run and the Z-score csv is in w_dir_retest
+#here it is assumed that the additional predict() that was required on this retest data has already been run and the Z-score csv is in w_dir_retest
 w_dir_retest = os.path.join(proc_dir,'retest/')
 name_retest = '1622_subjects' # must match the name given to the retest normdata objects when they were built
 
