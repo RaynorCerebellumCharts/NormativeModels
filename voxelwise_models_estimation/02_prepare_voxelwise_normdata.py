@@ -452,6 +452,7 @@ for b in range(n_batches):
     #rename covariates and batch effects for clarity - but this has to be kept straight in downstream analyses 
     norm_data = norm_data.assign_coords(covariates=[covariates[0] if x == "covariate_0" else x for x in norm_data.covariates.values])
     norm_data = norm_data.assign_coords(batch_effect_dims=[batch_effects[0] if x == "batch_effect_0" else batch_effects[1] if x == "batch_effect_1" else x for x in norm_data.batch_effect_dims.values])
+    norm_data.attrs.pop("unique_batch_effects", None)#need this from 1.2.0 upward to trigger the register batch effect
     norm_data.register_batch_effects() #updates the cached stuff dependent on batch effects names
     norm_data = norm_data.assign_coords(response_vars=[f'voxel_{x}' for x in voxel_indices[start:start+vox_batch_size]])
     
