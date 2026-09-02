@@ -12,7 +12,7 @@ This is done with the ANTs (Advanced Normalization Tools) toolbox and, additiona
 
 Voxel values are extracted from the preprocessed MRI data files and, together with demographic data of the sample (age as covariate, sex and site as batch effects), norm_data objects required by the pcntoolkit for normative modeling operations are built.
 This was done separately for batches of 150 voxels to keep reasonable variable size and estimation runtime.
-  
+
 * Run model estimation
 
 For each voxel, using a norm_data object and a 50-50 train-test split, a normative model (warped BLR) is fitted on the training set and predictions are made on the test set. Output metrics (z-scores, logp, evaluation statistics) are all stored within the model folders and can be accessed directly or loaded back in the norm_data objects. A general rule of thumb with the pcntoolkit is to leave available about 10 times the amount of storage space used by the initial norm_data file size in the model folders - the outputs of estimated voxelwise models are quite memory-intensive. 
@@ -34,6 +34,7 @@ Done as explained above. To be fully compatible with estimated models, the same 
 * Transfer models (use transfer notebook)
 
 Models are downloaded from public repository and extracted, norm_data objects are built with the new dataset, transfer is run either in a cluster (with the runner utility of the pcntoolkit) or on a local machine, and subject-level Z-score brain maps are produced. Voxel batch size can be adjusted.
+Of note : During model estimation, voxels were indexed based on vectorisation of the corresponding binarized brain mask (i.e. with numpy 3D flattening order). If users are interested in a subset of voxels, a mapping between their mask of interest resampled to MNI152NLin2009cSym template space, and the masks used for model estimation can be made to select appropriate voxel indices/models. 
 
 * Examine normative deviations in samples of interest
 
