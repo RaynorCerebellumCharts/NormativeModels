@@ -3,7 +3,7 @@
 """
 Created on Mon Jul 21 14:06:33 2025
 
-@author: Andre Marquand and YaPing Wang, adapted by Alice Chavanne
+@author: Andre Marquand and Yaping Wang, adapted by Alice Chavanne
 
 This script uses a separate utility script to submit preprocessing jobs to a local slurm cluster, and is only useful
 to show image preprocessing pipeline and parameters.
