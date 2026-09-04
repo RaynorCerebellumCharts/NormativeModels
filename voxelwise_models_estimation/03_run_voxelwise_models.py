@@ -59,8 +59,8 @@ if modality == 'mod_wmv':
 
 vox_batch_size = 150 #must be the same value as the script to prepare normdata 
 
-
-# %% prepare to get the clinical subjects out of the training set (e.g. ABCD preterm subjects)
+#%%First, we build the properly stratified train-test split
+# prepare to get the clinical subjects out of the training set (e.g. ABCD preterm subjects)
 dem_dir = '/path/to/demographics_dir/'
 g_age=pd.read_csv(os.path.join(dem_dir,'ABCD/phenotypes/ABCDstudyNDA_AnnualRelease4.0/Package_1199073/abcd_devhxss01.txt'), sep = '\t')
 g_age = g_age.iloc[1:]
@@ -78,8 +78,7 @@ ses_suffixes = ['_BL', '_2Y', '_4Y'] #add all possible observations for these su
 clin_subs =np.char.add(np.repeat(clin_subs, len(ses_suffixes)), np.tile(ses_suffixes, len(clin_subs)))
 
 
-#%% prepare to stratify ABCD so that the same subject doesn't end up in both train and test
-
+#prepare to stratify ABCD so that the same subject doesn't end up in both train and test
 #First, extract all ABCD site names from any normdata object
 # we need them to set aside ABCD subjects later
 normdata_path = os.path.join(w_dir, 'batch_0', 'norm_data.pkl')
@@ -143,6 +142,41 @@ def subject_level_split(data, split, random_state: int = 42,):
 
     return train, test
 
+#now we maki the split
+#separate the clinical subjects from the rest 
+clin_subs_existing = [s for s in clin_subs if s in norm_data.subject_ids.values]
+clin_subset = norm_data.where(norm_data.subject_ids.isin(clin_subs_existing),drop = True)
+remaining = norm_data.where(~norm_data.subject_ids.isin(clin_subs_existing), drop=True)
+
+#make subsets into proper norm_data objects again to get subclass methods
+clin_subset = NormData(data_vars=clin_subset.data_vars,coords=clin_subset.coords,
+    attrs=clin_subset.attrs,name=clin_subset.name)
+
+remaining = NormData(data_vars=remaining.data_vars,coords=remaining.coords,
+    attrs=remaining.attrs,name = remaining.name)
+
+#now take out abcd (non-preterm) to split it independently
+abcd_subset = remaining.select_batch_effects(name = 'abcd_subset', batch_effects = abcd_sites)
+abcd_subs = abcd_subset.subject_ids.values
+abcd_subset_train, abcd_subset_test= subject_level_split(abcd_subset, split = 0.6)
+
+remaining = norm_data.where(~remaining.subject_ids.isin(abcd_subs), drop=True)
+remaining = NormData(data_vars=remaining.data_vars,coords=remaining.coords,
+    attrs=remaining.attrs,name = remaining.name)
+remaining.register_batch_effects()
+
+#split the rest, put non-preterm abcd back in both train and test, and push clinical subjects into the test set
+train, test = remaining.train_test_split(splits = [0.5,0.5])
+train = train.merge(abcd_subset_train)
+test = test.merge(abcd_subset_test)
+test = test.merge(clin_subset)
+
+##save splits to keep them stable
+pd.DataFrame(train.subject_ids.values.tolist()).to_csv(os.path.join(root_dir, "train_subjects.csv"), header = None, index = None)
+pd.DataFrame(test.subject_ids.values.tolist()).to_csv(os.path.join(tooy_dir, "test_subjects.csv"), header = None, index = None)
+
+
+
 
 #%%Load data, configure and run model estimation for each voxel batch
 # N.B. The runner is usually convenient to handle whole datasets and slice it up as parallel jobs, 
@@ -165,6 +199,10 @@ template_blr = BLR(
     optimizer="powell",
     ard=False,
 )
+
+##using the split 
+train_subs = pd.read_csv(os.path.join(root_dir, "train_subjects.csv"), header = None, dtype = str)[0].to_list()
+test_subs = pd.read_csv(os.path.join(root_dir, "test_subjects.csv"), header = None, dtype = str)[0].to_list()
 
 
 for b in range(n_batches)[:]:
@@ -203,34 +241,34 @@ for b in range(n_batches)[:]:
     
     with open(normdata_path, 'rb') as f:
         norm_data = dill.load(f)
+        
+    train_set = set(train_subs)
+    test_set = set(test_subs)
     
-    #separate the clinical subjects from the rest 
-    clin_subs_existing = [s for s in clin_subs if s in norm_data.subject_ids.values]
-    clin_subset = norm_data.where(norm_data.subject_ids.isin(clin_subs_existing),drop = True)
-    remaining = norm_data.where(~norm_data.subject_ids.isin(clin_subs_existing), drop=True)
+    train_mask = np.fromiter(
+        (s in train_set for s in norm_data.subject_ids.values),
+        dtype=bool,
+        count=len(norm_data.subject_ids),
+    )
     
-    #make subsets into proper norm_data objects again to get subclass methods
-    clin_subset = NormData(data_vars=clin_subset.data_vars,coords=clin_subset.coords,
-        attrs=clin_subset.attrs,name=clin_subset.name)
+    test_mask = np.fromiter(
+        (s in test_set for s in norm_data.subject_ids.values),
+        dtype=bool,
+        count=len(norm_data.subject_ids),
+    )
+    
+    train = norm_data.isel(observations=train_mask)
+    test = norm_data.isel(observations=test_mask)
+    
+    #name them differently otherwise train and test results will overwrite each other
+    train = train.copy(deep=False)
+    train.attrs = train.attrs.copy()
+    test = test.copy(deep=False)
+    test.attrs = test.attrs.copy()
 
-    remaining = NormData(data_vars=remaining.data_vars,coords=remaining.coords,
-        attrs=remaining.attrs,name = remaining.name)
+    train.attrs["name"] = f"{train.attrs.get('name', 'data')}_train" 
+    test.attrs["name"] = f"{test.attrs.get('name', 'data')}_test"
     
-    #now take out abcd (non-preterm) to split it independently
-    abcd_subset = remaining.select_batch_effects(name = 'abcd_subset', batch_effects = abcd_sites)
-    abcd_subs = abcd_subset.subject_ids.values
-    abcd_subset_train, abcd_subset_test= subject_level_split(abcd_subset, split = 0.6)
-    
-    remaining = norm_data.where(~remaining.subject_ids.isin(abcd_subs), drop=True)
-    remaining = NormData(data_vars=remaining.data_vars,coords=remaining.coords,
-        attrs=remaining.attrs,name = remaining.name)
-    remaining.register_batch_effects()
-    
-    #split the rest, put non-preterm abcd back in both train and test, and push clinical subjects into the test set
-    train, test = remaining.train_test_split(splits = [0.5,0.5])
-    train = train.merge(abcd_subset_train)
-    test = test.merge(abcd_subset_test)
-    test = test.merge(clin_subset)
     
     runner.fit_predict(model, train, test, observe=False)
     
