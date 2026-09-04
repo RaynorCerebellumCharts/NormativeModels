@@ -6,7 +6,7 @@ Created on Thu Jun  8 12:39:47 2024
 @author: Alice Chavanne, with some adaptations from Charlotte Fraza
 
 This script collects demographic data (age, sex, site) and outputs from ANTs preprocessing (log jacobians, GMV or WMV nifti files)
-for the aggreagated reference sample, slices voxelwise values into batches of voxels to accomodate RAM and runtime requirements later on, 
+for the aggregated reference sample, slices voxelwise values into batches of voxels to accomodate RAM and runtime requirements later on, 
 and saves both covariates and batched voxel values into norm_data objects.
 """
 from pcntoolkit import NormData, dataio
