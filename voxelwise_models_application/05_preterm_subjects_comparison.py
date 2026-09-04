@@ -112,71 +112,6 @@ if not os.path.exists(os.path.join(w_dir,f'preterm_{preterm_thr}_comparison')):
 resample = True
 vox_size = [2, 2, 2] #2mm
 
-#%% prepare to stratify ABCD so that the same subject doesn't end up in both train and test
-
-#First, extract all ABCD site names from any normdata object
-# we need them to set aside ABCD subjects later
-normdata_path = os.path.join(w_dir, 'batch_0', 'norm_data.pkl')
-
-with open(normdata_path, 'rb') as f:
-    norm_data = pickle.load(f)
-abcd_sites = {np.str_('site'):[v for values in norm_data.unique_batch_effects.values() for v in values if "abcd" in str(v)]}
-
-
-
-def subject_level_split(data, split, random_state: int = 42,): #uses a slightly different split to balance for clinical subjects forced into test set
-
-    orig_ids = data.subject_ids.values
-
-    # strip trailing timepoint name
-    def extract_subject_fn(x):
-        parts = re.split(r"[_\-]", x)
-        return "_".join(parts[:-1]) if len(parts) > 1 else x
-
-    subjects_base = np.array([extract_subject_fn(s) for s in orig_ids])
-
-    #subject to indices map
-    subject_to_indices = collections.defaultdict(list)
-    for idx, sub in enumerate(subjects_base):
-        subject_to_indices[sub].append(idx)
-
-    unique_subjects = list(subject_to_indices.keys())
-    
-    #stratification labels per subject
-    batch_effects_stringified = data.concatenate_string_arrays(
-        *[data.batch_effects[:, i].astype(str) for i in range(data.batch_effects.shape[1])]
-    )
-
-    #one label per unique subject - take first one if several
-    subject_labels = [
-        batch_effects_stringified[subject_to_indices[sub][-1]].item()
-        for sub in unique_subjects
-    ]
-
-    train_subjects, test_subjects = skl_split(
-        unique_subjects,
-        test_size= 1-split,
-        random_state=random_state,
-        stratify=subject_labels
-    )
-    
-    #subject lists back to row indices
-    train_idx = np.concatenate([subject_to_indices[sub] for sub in train_subjects])
-    test_idx = np.concatenate([subject_to_indices[sub] for sub in test_subjects])
-
-    #Build new NormData objects
-    train = data.isel(observations=train_idx)
-    test = data.isel(observations=test_idx)
-
-    train.attrs = copy.deepcopy(data.attrs)
-    test.attrs = copy.deepcopy(data.attrs)
-
-    train.attrs["name"] = f"{data.attrs.get('name', 'data')}_train"
-    test.attrs["name"] = f"{data.attrs.get('name', 'data')}_test"
-
-    return train, test
-
-
 # %%  get the preterm subjects and controls subjects Z data
 
 #round up preterm subject ids
@@ -203,43 +138,13 @@ exclude_mild = preterm.iloc[:,0].values
 ses_suffixes = ['_BL', '_2Y', '_4Y'] #add all possible observations for these subjects because longitudinal
 all_exclude_mild =np.char.add(np.repeat(exclude_mild, len(ses_suffixes)), np.tile(ses_suffixes, len(exclude_mild)))
 
-
-def split_normdata(all_clin_subs, norm_data, splits, abcd_sites):
-
-    #separate the clinical subjects from norm_data 
-    clin_subs_existing = [s for s in all_clin_subs if s in norm_data.subject_ids.values]
-    clin_normdata = norm_data.where(norm_data.subject_ids.isin(clin_subs_existing),drop = True)
-    remaining = norm_data.where(~norm_data.subject_ids.isin(clin_subs_existing), drop=True)
-    
-    #re-make subsets into proper norm_data objects to get subclass methods
-    clin_normdata = NormData(data_vars=clin_normdata.data_vars,coords=clin_normdata.coords,
-        attrs=clin_normdata.attrs,name=clin_normdata.name) #here we define it only to get proper test set, it doesn't have zscores yet so no use
-
-    remaining = NormData(data_vars=remaining.data_vars,coords=remaining.coords,
-        attrs=remaining.attrs,name = remaining.name)
-    
-    #now take out abcd (non-preterm) to split it independently
-    abcd_subset = remaining.select_batch_effects(name = 'abcd_subset', batch_effects = abcd_sites)
-    abcd_subs = abcd_subset.subject_ids.values
-    abcd_subset_train, abcd_subset_test= subject_level_split(abcd_subset, split = 0.6)
-    
-    remaining = norm_data.where(~remaining.subject_ids.isin(abcd_subs), drop=True)
-    remaining = NormData(data_vars=remaining.data_vars,coords=remaining.coords,
-        attrs=remaining.attrs,name = remaining.name)
-    remaining.register_batch_effects()
-    
-    #split and put subjects back into the test set
-    train, test = remaining.train_test_split(splits = splits)
-    train = train.merge(abcd_subset_train)
-    test = test.merge(abcd_subset_test)
-    test = test.merge(clin_normdata)
-    
-    return train, test, clin_subs_existing
+train_subs = pd.read_csv(os.path.join(root_dir, "train_subjects.csv"), header = None, dtype = str)[0].to_list()
+test_subs = pd.read_csv(os.path.join(root_dir, "test_subjects.csv"), header = None, dtype = str)[0].to_list()
 
 
 #we split those two functions because we need to load the zscores on the test normdata before splitting by group
-def normdata_per_group(clin_subs_existing, test, ses_suffixes, all_exclude_mild):
-
+def normdata_per_group(all_clin_subs, test, ses_suffixes, all_exclude_mild):
+    clin_subs_existing = [s for s in all_clin_subs if s in test.subject_ids.values]
     control_subs = [s for s in test.subject_ids.values if any(tag in s for tag in ses_suffixes)]
     
     #push out preterms and mild preterms
@@ -255,17 +160,44 @@ def normdata_per_group(clin_subs_existing, test, ses_suffixes, all_exclude_mild)
     return clin_normdata, ctrl_normdata
 
 
-def process_batch (b, w_dir, all_clin_subs, splits, ses_suffix, abcd_sites, all_exclude_mild) :
+def process_batch (b, w_dir, train_subs, test_subs, all_clin_subs, ses_suffix, all_exclude_mild) :
     batch = f'batch_{b}'
     print(batch, flush = True)
     normdata_path = os.path.join(w_dir, batch, 'norm_data.pkl')
     
     with open(normdata_path, 'rb') as f:
         norm_data = pickle.load(f)
-        
-    train, test, clin_subs_existing = split_normdata(all_clin_subs, norm_data, splits, abcd_sites)
+    
+    train_set = set(train_subs)
+    test_set = set(test_subs)
+    
+    train_mask = np.fromiter(
+        (s in train_set for s in norm_data.subject_ids.values),
+        dtype=bool,
+        count=len(norm_data.subject_ids),
+    )
+    
+    test_mask = np.fromiter(
+        (s in test_set for s in norm_data.subject_ids.values),
+        dtype=bool,
+        count=len(norm_data.subject_ids),
+    )
+    
+    train = norm_data.isel(observations=train_mask)
+    test = norm_data.isel(observations=test_mask)
+    
+    #name them differently otherwise train and test results will overwrite each other
+    train = train.copy(deep=False)
+    train.attrs = train.attrs.copy()
+    test = test.copy(deep=False)
+    test.attrs = test.attrs.copy()
+
+    train.attrs["name"] = f"{train.attrs.get('name', 'data')}_train" 
+    test.attrs["name"] = f"{test.attrs.get('name', 'data')}_test"    
+       
+    # train, test, clin_subs_existing = split_normdata(all_clin_subs, norm_data, split, abcd_sites)
     test.load_zscores(save_dir = os.path.join(w_dir, batch, 'results'))
-    clin_normdata, ctrl_normdata = normdata_per_group(clin_subs_existing, test, ses_suffixes, all_exclude_mild)
+    clin_normdata, ctrl_normdata = normdata_per_group(all_clin_subs, test, ses_suffixes, all_exclude_mild)
 
     Z_clin = pd.DataFrame(clin_normdata.Z.values, index = clin_normdata.subject_ids.values, columns = clin_normdata.Z.response_vars.values)
     Z_ctrl = pd.DataFrame(ctrl_normdata.Z.values, index = ctrl_normdata.subject_ids.values, columns = ctrl_normdata.Z.response_vars.values)
@@ -273,14 +205,14 @@ def process_batch (b, w_dir, all_clin_subs, splits, ses_suffix, abcd_sites, all_
 
 
 if modality == 'log_jacs':
-    results = Parallel(n_jobs=-1, verbose = 5)(delayed(process_batch)(b, w_dir, all_clin_subs, splits, ses_suffixes, abcd_sites,all_exclude_mild)for b in range(n_batches)[:1])
+    results = Parallel(n_jobs=-1, verbose = 5)(delayed(process_batch)(b, w_dir, train_subs, test_subs, all_clin_subs, ses_suffixes, all_exclude_mild)for b in range(n_batches)[:1])
     all_Z_clin, all_Z_ctrl = zip(*results)
     Z_preterm = pd.concat(all_Z_clin, axis = 1)
     Z_controls = pd.concat(all_Z_ctrl, axis = 1)
 
 elif modality == 'mod_gmv_and_wmv':
-    results_gm = Parallel(n_jobs=-1, verbose = 5)(delayed(process_batch)(b, w_dir_gm, all_clin_subs, splits, ses_suffixes,abcd_sites, all_exclude_mild)for b in range(n_batches_gm)[:])
-    results_wm = Parallel(n_jobs=-1, verbose = 5)(delayed(process_batch)(b, w_dir_wm, all_clin_subs, splits, ses_suffixes, abcd_sites, all_exclude_mild)for b in range(n_batches_wm)[:])
+    results_gm = Parallel(n_jobs=-1, verbose = 5)(delayed(process_batch)(b, w_dir_gm, train_subs, test_subs, all_clin_subs, ses_suffixes, all_exclude_mild)for b in range(n_batches_gm)[:])
+    results_wm = Parallel(n_jobs=-1, verbose = 5)(delayed(process_batch)(b, w_dir_wm, train_subs, test_subs, all_clin_subs, ses_suffixes, all_exclude_mild)for b in range(n_batches_wm)[:])
     all_Z_clin_gm, all_Z_ctrl_gm = zip(*results_gm)
     all_Z_clin_wm, all_Z_ctrl_wm = zip(*results_wm)
 
@@ -339,17 +271,7 @@ with open(os.path.join(w_dir, f'preterm_{preterm_thr}_comparison', 'Z_controls.p
 
 #%% Optional - get demographics of preterms
 
-#take random batch and rebuild the exact test norm_data
-batch = 'batch_0'
-normdata_path = os.path.join(w_dir, batch, 'norm_data.pkl')
-with open(normdata_path, 'rb') as f:
-    norm_data = pickle.load(f)
-    
-train, test, clin_subs_existing = split_normdata(all_clin_subs, norm_data, splits, abcd_sites)
-test.load_zscores(save_dir = os.path.join(w_dir, batch, 'results'))
-clin_normdata, ctrl_normdata = normdata_per_group(clin_subs_existing, test, ses_suffixes,all_exclude_mild)
-
-df_preterm = df = pd.DataFrame({
+df_preterm = pd.DataFrame({
     "sub_id": clin_normdata.subjects.values,
     "age": clin_normdata.X.values.squeeze(),
     "sex": clin_normdata.batch_effects.isel(batch_effect_dims=0).values,
@@ -816,23 +738,46 @@ with open(os.path.join(w_dir, f'batch_{batch_num}', 'norm_data.pkl'), 'rb') as f
 clin_subs = clin_subs[np.char.endswith(np.array(clin_subs).astype(str) , timepoint)]    
 control_subs= control_subs[np.char.endswith(np.array(control_subs).astype(str) , timepoint)]    
 
-#get the normdata subsets to haev voxel values
-def extract_normdata_subsets(all_clin_subs, control_subs, norm_data):
+#need to recreat test
+train_subs_existing = train_subs
+test_subs_existing = test_subs
 
-    clin_subs_existing = [s for s in clin_subs if s in norm_data.subject_ids.values]
-    clin_subset = norm_data.where(norm_data.subject_ids.isin(clin_subs_existing),drop = True)
-    # remaining = norm_data.where(~norm_data.subject_ids.isin(clin_subs_existing), drop=True)
-    control_subset = norm_data.where(norm_data.subject_ids.isin(control_subs),drop = True)
-    
-    #re-make subsets into proper norm_data objects to get subclass methods
-    clin_subset = NormData(data_vars=clin_subset.data_vars,coords=clin_subset.coords,
-        attrs=clin_subset.attrs,name=clin_subset.name)
-    control_subset = NormData(data_vars=control_subset.data_vars,coords=control_subset.coords,
-        attrs=control_subset.attrs,name=control_subset.name)
+train_set = set(train_subs_existing)
+test_set = set(test_subs_existing)
 
-    return clin_subset, control_subset
+train_mask = np.fromiter(
+    (s in train_set for s in norm_data.subject_ids.values),
+    dtype=bool,
+    count=len(norm_data.subject_ids),
+)
 
-clin_subset, control_subset = extract_normdata_subsets(clin_subs, control_subs, norm_data)
+test_mask = np.fromiter(
+    (s in test_set for s in norm_data.subject_ids.values),
+    dtype=bool,
+    count=len(norm_data.subject_ids),
+)
+
+train = norm_data.isel(observations=train_mask)
+test = norm_data.isel(observations=test_mask)
+
+#name them differently otherwise train and test results will overwrite each other
+train = train.copy(deep=False)
+train.attrs = train.attrs.copy()
+test = test.copy(deep=False)
+test.attrs = test.attrs.copy()
+
+train.attrs["name"] = f"{train.attrs.get('name', 'data')}_train" 
+test.attrs["name"] = f"{test.attrs.get('name', 'data')}_test"    
+
+clin_subs_existing = [s for s in clin_subs if s in test.subject_ids.values]
+clin_subset = norm_data.where(test.subject_ids.isin(clin_subs_existing),drop = True)
+control_subset = norm_data.where(test.subject_ids.isin(control_subs),drop = True)
+#re-make subsets into proper norm_data objects to get subclass methods
+clin_subset = NormData(data_vars=clin_subset.data_vars,coords=clin_subset.coords,
+    attrs=clin_subset.attrs,name=clin_subset.name)
+control_subset = NormData(data_vars=control_subset.data_vars,coords=control_subset.coords,
+    attrs=control_subset.attrs,name=control_subset.name)
+forplot = control_subset.merge(clin_subset)
 
 #we also need the model for the plot
 model= NormativeModel.load(os.path.join(w_dir, f'batch_{batch_num}'))
