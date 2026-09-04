@@ -99,55 +99,6 @@ for metric in collect_metrics.index:
 #we also save a simple nifti with voxel indices, to use it later to map between fsl coordinates and estimated model for a given voxel   
 ptksave(np.arange(len(stat_data)), os.path.join(w_dir,'visuals','idx.nii.gz'), example=ex_nii, mask=mask_nii, dtype='uint32')
 
-#%% compute kurtosis and skew and also put them into niftis - this needs some more RAM
-
-def extract_num(col_name): #handling the oredering of column names between batches
-    match = re.search(r'voxel_(\d+)', col_name)
-    return int(match.group(1)) if match else float('inf') 
-
-skew_all = []
-kurtosis_all = []
-
-for b in range(n_batches):
-    batch = f'batch_{b}'
-    print(batch)
-    
-    #extract Z-scores - it's faster to do it using csv than re-loading inside norm_data objects, but then we need to be careful about ordering/column names
-    Z_path = os.path.join(w_dir, batch, 'results', 'Z_'+ name +'_test_+_abcd_subset_test_+_'+ name + '.csv')
-    Z = pd.read_csv(Z_path)
-    Z = Z.drop(columns='observations')
-    sorted_cols = sorted(Z.columns, key=extract_num)
-    Z = Z[sorted_cols]
-    
-    Z[np.isnan(Z)] = 0
-    Z[np.isinf(Z)] = 0
-    
-    #compute skewness and kurtosis
-    n = np.shape(Z)[0]
-    m1 = np.mean(Z, axis=0).astype(np.float64)
-    m3 = np.zeros_like(m1)
-    m4 = np.zeros_like(m1)
-    
-    diff = Z - m1
-    m3 += np.sum(diff**3, axis=0)
-    m4 += np.sum(diff**4, axis=0)
-    
-    s1 = np.std(Z, axis=0)
-    skew = n*m3/(n-1)/(n-2)/s1**3
-    kurtosis = (n * (n+1) * m4) / ((n-1) * (n-2) * (n-3) * s1**4) - (3 * (n-1)**2) / ((n-2) * (n-3))
-    
-    skew_all.extend(skew)
-    kurtosis_all.extend(kurtosis)
-    
-with open(os.path.join(w_dir, 'global_metrics', 'skew_test.pkl'), 'wb') as f:
-    pickle.dump(np.array(skew_all), f)
-with open(os.path.join(w_dir, 'global_metrics', 'kurtosis_test.pkl'), 'wb') as f:
-    pickle.dump(np.array(kurtosis_all), f)
-
-ptksave(np.array(skew_all), os.path.join(w_dir,'visuals','skew_test.nii.gz'), example=ex_nii, mask=mask_nii)
-ptksave(np.array(kurtosis_all), os.path.join(w_dir,'visuals','kurtosis_test.nii.gz'), example=ex_nii, mask=mask_nii)
-
-
 #%% some histograms of metrics across all voxels
 
 with open(os.path.join(w_dir, 'global_metrics', 'kurtosis_test.pkl'), 'rb') as f:
