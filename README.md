@@ -5,7 +5,7 @@ Participant IDs in the train and test set cannot be openly shared as they are no
  
 All voxelwise models herein have been estimated using masks of the MNI152NLin2009cSym templates from templateflow resampled to 2mm resolution - the masks required to run the scripts are included in the /template_data folder. Three volume measures were used : log of jacobian determinants (log(JD)), modulated grey matter volume (GMV), and modulated white matter volume (WMV).
 
-This was run on python 3.12 with pcntoolkit v1.3.0 (for additional python dependencies, cf. conda virtual environment yml file). The pcntoolkit general documentation is available at (https://pcntoolkit.readthedocs.io/en/stable/).
+This was run on python 3.12 with pcntoolkit v1.3.0 (for additional python dependencies, cf. conda virtual environment yml file). The pcntoolkit general documentation is available at (https://pcntoolkit.readthedocs.io/en/stable/). The pcntoolkit can run in windows, but a unix environment is recommended for this analysis.
 
 ## General workflow for model estimation
 * Preprocess MRI data
