@@ -5,8 +5,8 @@ Created on Thu Jan 9 12:30:17 2025
 
 @author Alice Chavanne
 
-This script collects evaluation metrics for the newly estimated normative model already computed by the pcntoolkit, 
-and additionally computes skew and kurstosis. All metrics are voxelwise and projected back onto nifti space. 
+This script collects evaluation metrics for the newly estimated normative model already computed by the pcntoolkit. 
+All metrics are voxelwise and projected back onto nifti space. 
 Also contains sanity checks and plotting (centiles, qq plots).
 """
 
