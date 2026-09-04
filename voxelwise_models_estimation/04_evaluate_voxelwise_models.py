@@ -74,7 +74,7 @@ for b in range(n_batches)[:]:
     print(batch)
     
     #extracting directly from csv here is faster than loading back in norm_data but needs more careful checking
-    datapath = os.path.join(w_dir, batch, 'results', 'statistics_'+ name +'_test_+_abcd_subset_test_+_'+ name + '.csv')
+    datapath = os.path.join(w_dir, batch, 'results', 'statistics_'+ name +'_test.csv')
     data = pd.read_csv(datapath)
     data.set_index("statistic", inplace = True)
   
@@ -201,101 +201,6 @@ with open(os.path.join(w_dir_retest, 'retest_metrics', 'Z_retest.pkl'), 'wb') as
 
 #%%% Optional -  set up data preparation for centile plots of specific voxels harmonized on batch effects 
 #To plot this we need a fitted normative model object and the corresponding (test) normdata object
-#so first we do as we did in the running script (ABCD stratify etc.) for normdata
-
-# deal with the clinical subjects forced into test set
-g_age=pd.read_csv(os.path.join(demographics_dir, 'ABCD/phenotypes/ABCDstudyNDA_AnnualRelease4.0/Package_1199073/abcd_devhxss01.txt'), sep = '\t')
-g_age = g_age.iloc[1:]
-g_age.rename(columns={'subjectkey': 'sub_id','devhx_ss_12_p':'gestational_age'}, inplace=True)
-g_age = g_age[['sub_id','gestational_age']]
-g_age = g_age.dropna()
-g_age['sub_id'] = g_age['sub_id'].str.replace('_', '', regex=False) #correspondence to sub foldernames
-g_age['sub_id'] = 'sub-'+ g_age['sub_id']
-g_age['gestational_age'] = 40-g_age['gestational_age'].astype(int) # convert to actual GA
-g_age = g_age[g_age.gestational_age > 0] # drop the 'uncertain' 999 values
-preterm = g_age[g_age['gestational_age']<=37]
-preterm.reset_index(drop=True, inplace = True)
-clin_subs = preterm.iloc[:,0].values
-ses_suffixes = ['_BL', '_2Y', '_4Y'] #add all possible observations for these subjects because longitudinal
-clin_subs =np.char.add(np.repeat(clin_subs, len(ses_suffixes)), np.tile(ses_suffixes, len(clin_subs)))
-
-
-#extract ABCD sites
-normdata_path = os.path.join(w_dir, 'batch_0', 'norm_data.pkl')
-
-with open(normdata_path, 'rb') as f:
-    norm_data = pickle.load(f)
-abcd_sites = {np.str_('site'):[v for values in norm_data.unique_batch_effects.values() for v in values if "abcd" in str(v)]}
-
-
-def subject_level_split(data, split, random_state: int = 42,):
-    """
-    Perform subject-level stratified train/test split on a NormData object.
-    ----------
-    data : NormData
-        The input NormData object.
-    split : float
-        Proportion of data (subjects) assigned to train.
-    
-    Returns
-    -------
-    (NormData, NormData)
-        Train and test NormData objects.
-    """
-
-    orig_ids = data.subject_ids.values
-
-    # strip trailing timepoint name
-    def extract_subject_fn(x):
-        parts = re.split(r"[_\-]", x)
-        return "_".join(parts[:-1]) if len(parts) > 1 else x
-
-    subjects_base = np.array([extract_subject_fn(s) for s in orig_ids])
-
-    #subject to indices map
-    subject_to_indices = collections.defaultdict(list)
-    for idx, sub in enumerate(subjects_base):
-        subject_to_indices[sub].append(idx)
-
-    unique_subjects = list(subject_to_indices.keys())
-    
-    #stratification labels per subject
-    batch_effects_stringified = data.concatenate_string_arrays(
-        *[data.batch_effects[:, i].astype(str) for i in range(data.batch_effects.shape[1])]
-    )
-
-    #one label per unique subject - take first one if several
-    subject_labels = [
-        batch_effects_stringified[subject_to_indices[sub][-1]].item()
-        for sub in unique_subjects
-    ]
-
-    train_subjects, test_subjects = skl_split(
-        unique_subjects,
-        test_size= 1-split,
-        random_state=random_state,
-        stratify=subject_labels
-    )
-    
-    #subject lists back to row indices
-    train_idx = np.concatenate([subject_to_indices[sub] for sub in train_subjects])
-    test_idx = np.concatenate([subject_to_indices[sub] for sub in test_subjects])
-
-    #Build new NormData objects
-    train = data.isel(observations=train_idx)
-    test = data.isel(observations=test_idx)
-
-    train.attrs = copy.deepcopy(data.attrs)
-    test.attrs = copy.deepcopy(data.attrs)
-
-    train.attrs["name"] = f"{data.attrs.get('name', 'data')}_train"
-    test.attrs["name"] = f"{data.attrs.get('name', 'data')}_test"
-
-    return train, test
-
-
-
-#%% Now the actual data extraction and plotting
 
 if not os.path.exists(os.path.join(root_dir,'for_figures')):
     os.makedirs(os.path.join(root_dir,'for_figures'))
@@ -323,35 +228,37 @@ print (f'batch_{batch_num}_voxel_{vox_id}')
 with open(os.path.join(w_dir, f'batch_{batch_num}', 'norm_data.pkl'), 'rb') as f:
     norm_data= pickle.load(f)
 
-#now, proceed with identical stratification steps used for the estimation to get the final test set
 
-#separate the clinical subjects from norm_data
-clin_subs_existing = [s for s in clin_subs if s in norm_data.subject_ids.values]
-clin_subset = norm_data.where(norm_data.subject_ids.isin(clin_subs_existing),drop = True)
-remaining = norm_data.where(~norm_data.subject_ids.isin(clin_subs_existing), drop=True)
+#recreate the test data
+train_subs = pd.read_csv(os.path.join(root_dir, "train_subjects.csv"), header = None, dtype = str)[0].to_list()
+test_subs = pd.read_csv(os.path.join(root_dir, "test_subjects.csv"), header = None, dtype = str)[0].to_list()
 
-#re-make subsets into proper norm_data objects to get subclass methods
-clin_subset = NormData(data_vars=clin_subset.data_vars,coords=clin_subset.coords,
-    attrs=clin_subset.attrs,name=clin_subset.name)
+train_set = set(train_subs)
+test_set = set(test_subs)
 
-remaining = NormData(data_vars=remaining.data_vars,coords=remaining.coords,
-    attrs=remaining.attrs,name = remaining.name)
+train_mask = np.fromiter(
+    (s in train_set for s in norm_data.subject_ids.values),
+    dtype=bool,
+    count=len(norm_data.subject_ids),
+)
 
-#take out abcd (non-preterm) to split it independently
-abcd_subset = remaining.select_batch_effects(name = 'abcd_subset', batch_effects = abcd_sites)
-abcd_subs = abcd_subset.subject_ids.values
-abcd_subset_train, abcd_subset_test= subject_level_split(abcd_subset, split = 0.6)
+test_mask = np.fromiter(
+    (s in test_set for s in norm_data.subject_ids.values),
+    dtype=bool,
+    count=len(norm_data.subject_ids),
+)
 
-remaining = norm_data.where(~remaining.subject_ids.isin(abcd_subs), drop=True)
-remaining = NormData(data_vars=remaining.data_vars,coords=remaining.coords,
-    attrs=remaining.attrs,name = remaining.name)
-remaining.register_batch_effects()
+train = norm_data.isel(observations=train_mask)
+test = norm_data.isel(observations=test_mask)
 
-#split and put subjects back into the test set
-train, test = remaining.train_test_split(splits = [0.5,0.5])
-train = train.merge(abcd_subset_train)
-test = test.merge(abcd_subset_test)
-test = test.merge(clin_subset) 
+train = train.copy(deep=False)
+train.attrs = train.attrs.copy()
+test = test.copy(deep=False)
+test.attrs = test.attrs.copy()
+   
+train.attrs["name"] = f"{train.attrs.get('name', 'data')}_train" 
+test.attrs["name"] = f"{test.attrs.get('name', 'data')}_test"
+
 test.load_zscores(save_dir = os.path.join(w_dir, f'batch_{batch_num}', 'results')) #used for qqplots
 
 #now that we have our proper test normadata, we load the model
