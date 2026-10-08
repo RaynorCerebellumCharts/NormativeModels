@@ -79,8 +79,8 @@ for s in sub_dirs[:]:
     ants_cp_cmd = ['ComposeMultiTransform 3 ',
                    os.path.join(ants_dir,'T1_BrainNorm_AffWarp.nii.gz'),
                    '-R', tpl_file,
-                   '-i', os.path.join(ants_dir, 'T1_BrainNorm_1Warp.nii.gz'),
-                   '-i', os.path.join(ants_dir, 'T1_BrainNorm_0GenericAffine.mat'),
+                    os.path.join(ants_dir, 'T1_BrainNorm_1Warp.nii.gz'),
+                    os.path.join(ants_dir, 'T1_BrainNorm_0GenericAffine.mat'),
                     ';']
     
     # create Jacobian determinant map from combined transform
