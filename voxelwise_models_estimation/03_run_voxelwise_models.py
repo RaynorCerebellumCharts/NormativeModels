@@ -160,7 +160,7 @@ abcd_subset = remaining.select_batch_effects(name = 'abcd_subset', batch_effects
 abcd_subs = abcd_subset.subject_ids.values
 abcd_subset_train, abcd_subset_test= subject_level_split(abcd_subset, split = 0.6)
 
-remaining = norm_data.where(~remaining.subject_ids.isin(abcd_subs), drop=True)
+remaining = remaining.where(~remaining.subject_ids.isin(abcd_subs), drop=True)
 remaining = NormData(data_vars=remaining.data_vars,coords=remaining.coords,
     attrs=remaining.attrs,name = remaining.name)
 remaining.register_batch_effects()
