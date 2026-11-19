@@ -7,7 +7,7 @@ All voxelwise models herein have been estimated using masks of the MNI152NLin200
 
 This was run on python 3.12 with pcntoolkit v1.3.0 (for additional python dependencies, cf. conda virtual environment yml file). The pcntoolkit general documentation is available at (https://pcntoolkit.readthedocs.io/en/stable/). The pcntoolkit can run in windows, but a unix environment is recommended for this analysis.
 
-Demo data (preprocessed log JD, GMV and WMV images as well as demographic characteristics) are available at (https://surfdrive.surf.nl/s/iC7zKCPrXggMscQ) for prototyping purposes. The original dataset is freely available on OpenNeuro (Lei Qiao and Lijie Zhang (2026). Salience Network and Adaptive Control. https://openneuro.org/datasets/ds008254/versions/1.0.5). Four subjects from the initial dataset were not included in our demo data because preprocessed images failed visual QC. 
+Demo data (preprocessed log JD, GMV and WMV images for 39 participants) are available at (https://surfdrive.surf.nl/s/iC7zKCPrXggMscQ) for prototyping purposes. The original dataset is freely available on OpenNeuro (Lei Qiao and Lijie Zhang (2026). Salience Network and Adaptive Control. https://openneuro.org/datasets/ds008254/versions/1.0.5). Four subjects from the initial dataset were not included in our demo data because preprocessed images failed visual QC. 
 
 
 ## General workflow for model estimation
